@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: flask-m3u8-player
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:gunicorn_app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
