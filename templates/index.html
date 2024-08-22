@@ -19,23 +19,55 @@
             player = new OpenPlayer('videoPlayer', {
                 ads: {
                     src: '{{ ad_tag_url }}',
-                    skipIn: 5
-                }
-            });
-
-            player.init();
-
-            player.getElement().addEventListener('timeupdate', function() {
-                if (currentMarkerIndex < scte35Markers.length) {
-                    var currentTime = player.getMedia().currentTime;
-                    var nextMarker = scte35Markers[currentMarkerIndex];
-                    if (currentTime >= nextMarker.time) {
-                        console.log("Triggering ad at:", nextMarker.time, "Tag:", nextMarker.tag);
-                        player.ads.play();
-                        currentMarkerIndex++;
+                    skipIn: 5,
+                    fetchOptions: {
+                        mode: 'no-cors'
                     }
                 }
             });
+
+            player.init()
+                .then(() => {
+                    console.log('Player initialized successfully');
+                    setupAdHandling();
+                })
+                .catch(error => {
+                    console.error('Error initializing player:', error);
+                });
+
+            function setupAdHandling() {
+                player.getElement().addEventListener('timeupdate', function() {
+                    if (currentMarkerIndex < scte35Markers.length) {
+                        var currentTime = player.getMedia().currentTime;
+                        var nextMarker = scte35Markers[currentMarkerIndex];
+                        if (currentTime >= nextMarker.time) {
+                            console.log("Triggering ad at:", nextMarker.time, "Tag:", nextMarker.tag);
+                            triggerAd();
+                            currentMarkerIndex++;
+                        }
+                    }
+                });
+
+                player.getElement().addEventListener('ads_error', function(error) {
+                    console.error('Ad error:', error);
+                });
+            }
+
+            function triggerAd() {
+                if (player && player.ads) {
+                    player.ads.play()
+                        .then(() => {
+                            console.log('Ad played successfully');
+                        })
+                        .catch(error => {
+                            console.error('Error playing ad:', error);
+                            player.play();
+                        });
+                } else {
+                    console.error('Ads module not available');
+                    player.play();
+                }
+            }
         });
     </script>
 </body>
