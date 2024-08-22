@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>M3U8 Player with VAST Ads</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/openplayerjs@latest/dist/openplayer.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/openplayerjs@latest/dist/openplayer.min.js"></script>
+</head>
+<body>
+    <video id="videoPlayer" class="op-player__media" controls playsinline>
+        <source src="{{ m3u8_url }}" type="application/x-mpegURL">
+    </video>
+
+    <script>
+        var player;
+        var scte35Markers = JSON.parse('{{ scte35_markers | safe }}');
+        var currentMarkerIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            player = new OpenPlayer('videoPlayer', {
+                ads: {
+                    src: '{{ ad_tag_url }}',
+                    skipIn: 5
+                }
+            });
+
+            player.init();
+
+            player.getElement().addEventListener('timeupdate', function() {
+                if (currentMarkerIndex < scte35Markers.length) {
+                    var currentTime = player.getMedia().currentTime;
+                    var nextMarker = scte35Markers[currentMarkerIndex];
+                    if (currentTime >= nextMarker.time) {
+                        console.log("Triggering ad at:", nextMarker.time, "Tag:", nextMarker.tag);
+                        player.ads.play();
+                        currentMarkerIndex++;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
